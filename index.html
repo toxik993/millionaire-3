@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Кто хочет стать миллионером? — Полная версия</title>
+    <style>
+        :root {
+            --bg: #071030;
+            --gold: #d4af37;
+            --gold-light: #f5e7a3;
+            --panel: rgba(255, 255, 255, 0.04);
+            --btn: #16345a;
+            --accent: #2a6fb8;
+            --text: #ffffff;
+            --muted: rgba(255, 255, 255, 0.6);
+            --correct: #1f8b4c;
+            --wrong: #b91c2c;
+            --life-bg: rgba(20, 40, 70, 0.8);
+        }
+        * { box-sizing: border-box; font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(1200px 400px at 10% 10%, rgba(255,255,255,0.02), transparent),
+                        linear-gradient(180deg, #041328 0%, var(--bg) 60%);
+            color: var(--text);
+        }
+        .container { max-width: 1500px; margin: 24px auto; padding: 20px; display: flex; gap: 24px; flex-wrap: wrap; }
+        .left { flex: 2.4; background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border-radius: 28px; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        .right { flex: 1.2; background: var(--panel); border-radius: 28px; padding: 18px; height: fit-content; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); }
+        .header-flex { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+        .logo { width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, var(--gold), #b88c2b); display: flex; align-items: center; justify-content: center; color: #071030; font-weight: 800; font-size: 32px; }
+        h1 { font-size: 22px; margin: 0; }
+        .small { font-size: 13px; color: var(--muted); }
+        .meta { margin-left: auto; text-align: right; }
+        .prize { font-weight: 800; color: var(--gold); font-size: 1.2rem; }
+        .panel { background: rgba(0,0,0,0.25); padding: 18px; border-radius: 24px; margin-bottom: 12px; }
+        .question { font-size: 22px; padding: 12px 6px; margin-bottom: 24px; font-weight: 600; line-height: 1.35; }
+        .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .ans-btn {
+            background: linear-gradient(145deg, #102a44, #0a1c30);
+            border-radius: 60px; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1);
+            cursor: pointer; display: flex; gap: 14px; align-items: center; font-weight: 600;
+            transition: 0.2s;
+        }
+        .ans-btn:hover:not(.disabled-ans) { transform: translateY(-2px); background: linear-gradient(145deg, #1a3e62, #0e2a46); border-color: rgba(212,175,55,0.5); }
+        .ans-btn.selected { border-color: var(--gold); background: linear-gradient(145deg, #1e4a6e, #123a54); box-shadow: 0 0 0 2px rgba(212,175,55,0.3); }
+        .ans-letter { width: 46px; height: 46px; border-radius: 46px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; }
+        .lifelines { display: flex; gap: 14px; margin: 20px 0 14px; }
+        .life { background: var(--life-bg); padding: 10px 6px; border-radius: 40px; flex: 1; text-align: center; cursor: pointer; border: 1px solid rgba(212,175,55,0.4); font-weight: 600; backdrop-filter: blur(4px); }
+        .life:hover:not(.disabled) { background: rgba(212,175,55,0.2); border-color: var(--gold); }
+        .life.disabled { opacity: 0.35; cursor: not-allowed; }
+        .controls { display: flex; gap: 14px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
+        .btn { background: var(--accent); color: #fff; padding: 10px 24px; border-radius: 60px; border: none; cursor: pointer; font-weight: 700; transition: 0.1s; }
+        .btn:hover { background: #3c82d4; transform: scale(0.98); }
+        .btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.3); }
+        .btn.danger { background: #b91c2c; }
+        .btn.danger:hover { background: #8b1522; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .ladder { display: flex; flex-direction: column; gap: 6px; max-height: 350px; overflow-y: auto; padding-right: 4px; }
+        .ladder-item { display: flex; justify-content: space-between; padding: 10px 14px; border-radius: 14px; color: var(--muted); font-weight: 600; font-size: 14px; }
+        .ladder-item.active { background: linear-gradient(90deg, rgba(212,175,55,0.35), rgba(212,175,55,0.1)); color: var(--gold); border-left: 3px solid var(--gold); }
+        .ladder-item.completed { background: linear-gradient(90deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05)); color: var(--gold-light); }
+        .overlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(2,6,16,0.88); z-index: 100; backdrop-filter: blur(6px); }
+        .card { background: linear-gradient(145deg, #0b1c34, #05152a); padding: 28px; border-radius: 32px; max-width: 750px; width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid rgba(212,175,55,0.3); }
+        .modal h2 { margin: 0 0 12px; color: var(--gold); }
+        .login-input, .constructor-input, .search-input { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 60px; padding: 10px 16px; color: white; width: 100%; margin-bottom: 12px; }
+        .user-info { display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); border-radius: 60px; padding: 8px 16px; margin-bottom: 16px; }
+        .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 12px 0; color: var(--muted); font-size: 14px; }
+        .checkbox-label input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold); }
+        .leaderboard-table { width: 100%; border-collapse: collapse; }
+        .leaderboard-table th, .leaderboard-table td { padding: 8px 6px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .leaderboard-table tr { cursor: pointer; transition: 0.1s; }
+        .leaderboard-table tr:hover { background: rgba(255,255,255,0.08); }
+        .current-user-row { background: rgba(212,175,55,0.2); font-weight: bold; }
+        .admin-badge { background: #b91c2c; border-radius: 20px; padding: 2px 8px; font-size: 10px; margin-left: 8px; display: inline-block; }
+        .pinned-badge { background: var(--gold); color: #071030; border-radius: 20px; padding: 2px 8px; font-size: 10px; margin-left: 8px; }
+        .correct-highlight { background: linear-gradient(145deg, #1f8b4c, #136b3a) !important; border-color: #6fcf97 !important; box-shadow: 0 0 10px #2ecc71; }
+        .wrong-highlight { background: linear-gradient(145deg, #b91c2c, #8b1522) !important; border-color: #e57373 !important; }
+        .disabled-ans { pointer-events: none; opacity: 0.65; }
+        .test-selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+        .test-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 40px; padding: 8px 16px; cursor: pointer; transition: 0.1s; }
+        .test-btn.active { background: var(--gold); color: #071030; border-color: var(--gold); }
+        .library-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 12px; margin-bottom: 12px; transition: 0.1s; }
+        .library-card.pinned { background: rgba(212,175,55,0.15); border-left: 3px solid var(--gold); }
+        .library-card:hover { background: rgba(255,255,255,0.1); }
+        .profile-stats { margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 16px; }
+        .success-msg { color: #2ecc71; text-align: center; margin-top: 10px; font-size: 13px; }
+        .error-msg { color: #e74c3c; text-align: center; margin-top: 10px; font-size: 13px; }
+        .ideas-section { margin-top: 20px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(212,175,55,0.2); }
+        .ideas-section h3 { color: var(--gold); margin-bottom: 12px; font-size: 16px; }
+        .ideas-section ul { margin: 0; padding-left: 20px; }
+        .ideas-section li { margin: 8px 0; color: var(--muted); font-size: 13px; }
+        footer { margin-top: 20px; color: var(--muted); font-size: 12px; text-align: center; }
+        @media (max-width: 800px) { .container { flex-direction: column; } .answers { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="left">
+        <div class="header-flex">
+            <div class="logo">₽</div>
+            <div><h1>Кто хочет стать миллионером?</h1><div class="small">📖 Полная версия | 40 вопросов</div></div>
+            <div class="meta"><div class="num">Вопрос <span id="qnum">—</span> / 40</div><div class="prize" id="currentPrize">0 ₽</div></div>
+        </div>
+        <div class="test-selector">
+            <button class="test-btn active" id="defaultTestBtn">⭐ Стандартный тест</button>
+            <button class="test-btn" id="constructorBtn">🛠 Создать тест</button>
+            <button class="test-btn" id="libraryBtn">📚 Библиотека тестов</button>
+        </div>
+        <div class="panel">
+            <div class="question-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;"><div class="small">Вопрос <span id="qNumber">—</span></div><div class="prize small">🏆 Несгораемая: <span id="safePrize">0 ₽</span></div></div>
+            <div class="question" id="questionText">Загрузка...</div>
+            <div class="answers" id="answers"></div>
+            <div class="lifelines"><div class="life" id="life5050">🎲 50:50</div><div class="life" id="lifefriend">📞 Звонок другу</div><div class="life" id="lifeaud">👥 Помощь зала</div></div>
+            <div class="controls">
+                <button class="btn" id="submitBtn" disabled>✅ Проверить ответы</button>
+                <button class="btn" id="nextBtn" disabled>➡ Далее</button>
+                <button class="btn secondary" id="restartBtn">🔄 Начать заново</button>
+                <div style="margin-left: auto; color: var(--gold); font-weight: bold;">💰 <span id="prizeDisplay">0 ₽</span></div>
+            </div>
+        </div>
+        <div class="ideas-section">
+            <h3>💡 Идеи по улучшению проекта</h3>
+            <ul>
+                <li>🎮 <strong>Онлайн-мультиплеер</strong> — игра против реальных соперников в реальном времени</li>
+                <li>🏅 <strong>Система достижений и ачивок</strong> — награды за серии правильных ответов</li>
+                <li>📊 <strong>Подробная статистика</strong> — графики прогресса, проценты правильных ответов</li>
+                <li>🎨 <strong>Кастомизация интерфейса</strong> — смена тем, фонов, анимаций</li>
+                <li>🔊 <strong>Звуковое сопровождение</strong> — музыка, голос ведущего</li>
+                <li>📱 <strong>Мобильное приложение</strong> — PWA версия с офлайн-доступом</li>
+                <li>🤖 <strong>ИИ-генератор вопросов</strong> — автоматическое создание тестов</li>
+                <li>📤 <strong>Экспорт/импорт тестов</strong> — обмен тестами через JSON-файлы</li>
+            </ul>
+        </div>
+        <footer>✨ Выберите все правильные варианты → «Проверить» → «Далее». При ошибке выигрыш обнуляется до несгораемой суммы.</footer>
+    </div>
+    <div class="right">
+        <div class="user-info"><span>👤 <span id="userNameDisplay">Не авторизован</span></span><button class="btn secondary" id="loginBtn" style="padding: 6px 16px;">Войти</button></div>
+        <div style="display: flex; justify-content: space-between; margin: 14px 0 12px;"><div class="small">🏆 Таблица лидеров</div><div class="small">✨ Нажмите на игрока</div></div>
+        <div id="leaderboardList" style="max-height: 350px; overflow-y: auto;"><div style="text-align:center;padding:20px;">Загрузка...</div></div>
+        <div style="margin-top: 16px;"><button class="btn secondary" id="myTestsBtn" style="width:100%;">📋 Мои созданные тесты</button></div>
+        <div style="margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 16px;">
+            <div class="small" style="text-align:center;">📌 Обычные игроки могут создать до 3 аккаунтов</div>
+        </div>
+    </div>
+</div>
+
+<!-- Модалки -->
+<div id="modal" class="overlay" style="display:none;"><div class="card modal"><h2 id="modalTitle"></h2><p id="modalText"></p><div id="modalExtra"></div><button class="btn" id="modalClose" style="margin-top:16px;">Понятно</button></div></div>
+<div id="loginModal" class="overlay" style="display:none;"><div class="card"><h2>🔐 Вход / Регистрация</h2><p>Пароль: от 3 до 10 символов</p><input type="text" id="loginNameInput" class="login-input" placeholder="Имя пользователя" maxlength="30"><input type="password" id="loginPasswordInput" class="login-input" placeholder="Пароль (3-10 символов)" maxlength="10"><label class="checkbox-label"><input type="checkbox" id="rememberMeCheckbox"> Запомнить меня</label><div style="display:flex;gap:12px;"><button class="btn" id="doLoginBtn">Войти</button><button class="btn secondary" id="doRegisterBtn">Зарегистрироваться</button><button class="btn secondary" id="cancelLoginBtn">Отмена</button></div><div id="loginMessage" class="small" style="text-align:center;margin-top:12px;"></div></div></div>
+<div id="constructorModal" class="overlay" style="display:none;"><div class="card" style="max-width:700px;"><h2>🛠 Конструктор тестов</h2><p>Создайте свой тест (до 50 вопросов, до 4 ответов)</p><div><input type="text" id="testNameInput" class="login-input" placeholder="Название теста"></div><div id="questionsBuilder"></div><button class="btn" id="addQuestionBtn" style="margin:10px 0;">+ Добавить вопрос</button><div style="display:flex;gap:12px;"><button class="btn" id="saveTestBtn">💾 Сохранить тест</button><button class="btn secondary" id="closeConstructorBtn">Отмена</button></div></div></div>
+<div id="libraryModal" class="overlay" style="display:none;"><div class="card" style="max-width:750px;"><h2>📚 Библиотека тестов</h2><input type="text" id="searchLibraryInput" class="search-input" placeholder="🔍 Поиск по названию..."><div id="libraryTestsList"></div><button class="btn secondary" id="closeLibraryBtn" style="margin-top:16px;">Закрыть</button></div></div>
+<div id="myTestsModal" class="overlay" style="display:none;"><div class="card"><h2>📋 Мои тесты</h2><div id="myTestsList"></div><button class="btn secondary" id="closeMyTestsBtn" style="margin-top:16px;">Закрыть</button></div></div>
+<div id="profileModal" class="overlay" style="display:none;"><div class="card"><h2 id="profileTitle">Профиль игрока</h2><div id="profileContent"></div><button class="btn secondary" id="closeProfileBtn" style="margin-top:16px;">Закрыть</button></div></div>
+
+<script>
+    // ==================== 40 ВОПРОСОВ ====================
+    const STANDARD_QUESTIONS = [
+        { text: "В каком слове на месте пропуска пишется Е?", options: ["пр..зидент", "пр..небречь", "пр..вратности", "пр..зидиум"], correct: [0,1,2,3], prize: 500 },
+        { text: "В каком слове пропущена буква Ё?", options: ["ш..лковый", "ш..рох", "капюш..н", "ш..мпол"], correct: [0], prize: 1000 },
+        { text: "Укажите слово, в котором на месте пропуска пишется И?", options: ["ц..ган", "панц..рь", "ц..ркуль", "ц..ц"], correct: [1,2], prize: 2000 },
+        { text: "В каком ряду в обоих словах пропущена буква Ю?", options: ["(они) бор..тся, (они) кле..т", "(они) бре..тся, (они) дыш..т", "(они) стел..т, (они) ла..т", "(они) се..т, (они) ве..т"], correct: [3], prize: 3000 },
+        { text: "В каком варианте НЕ со словом пишется раздельно?", options: ["(не)взрачный вид", "(не)годовать от боли", "далеко (не)красивый", "(не)настная погода"], correct: [2], prize: 5000 },
+        { text: "В каком предложении нужно поставить одну запятую?", options: ["Ветер срывал листья", "Он быстро оглянулся но никого не увидел.", "Тучи рассеялись и засияло солнце.", "Мальчик сидел и грыз семечки"], correct: [1,2], prize: 8000 },
+        { text: "В каком слове пропущена буква А (чередование)?", options: ["выр..сли", "заг..релый", "к..сание", "прик..сновение"], correct: [2], prize: 12000 },
+        { text: "Укажите объяснение запятой: «Месяц светил ярко ( ) и вся степь осветилась»", options: ["Простое, запятая не нужна", "ССП, запятая нужна", "ССП, запятая не нужна (общ. член)", "Простое, запятая нужна"], correct: [1], prize: 16000 },
+        { text: "В каком варианте оба слова через дефис?", options: ["(по)новому, (кое)кто", "(в)третьих, (пол)лимона", "(юго)запад, (средне)вековый", "(пол)Украины, (изжелта)красный"], correct: [0,1,3], prize: 32000 },
+        { text: "Где одна запятая при причастном обороте?", options: ["Покрытая инеем берёза", "Мы подошли к дому стоявшему на краю", "Испуганный шорохом заяц", "Окружённые водой острова"], correct: [1,2], prize: 64000 },
+        { text: "Фразеологизм «бездельничать»?", options: ["бить баклуши", "точить лясы", "водить за нос", "зарубить на носу"], correct: [0], prize: 125000 },
+        { text: "Ряд паронимов?", options: ["эффектный – эффективный", "большой – огромный", "смеяться – хохотать", "быстрый – скорый"], correct: [0], prize: 125000 },
+        { text: "Средство связи: «Было жарко. И температура достигла 30°»", options: ["синоним", "повтор", "антоним", "союз"], correct: [3], prize: 250000 },
+        { text: "Тип речи: «Сначала небо покрылось тучами. Подул ветер»", options: ["повествование", "описание", "рассуждение", "с описанием"], correct: [0], prize: 250000 },
+        { text: "Где нужно тире? «Беловежская пуща вот показатель красоты»", options: ["Беловежская пуща вот показатель красоты", "Хорошая книга точно беседа", "Я долго бродил", "Учёный любит дело"], correct: [0], prize: 500000 },
+        { text: "Средство связи: «Вчера был ветер. Из‑за него деревья поломались»", options: ["повтор", "союз", "местоимение", "наречие"], correct: [2], prize: 500000 },
+        { text: "Ошибка в форме слова?", options: ["лягте", "более сладкий", "ихние вещи", "тремястами"], correct: [2], prize: 1000000 },
+        { text: "Нет грамматической ошибки?", options: ["Согласно приказа", "Оплатите за проезд", "Уверенность в победе", "По окончанию"], correct: [2,3], prize: 1500000 },
+        { text: "Примыкание?", options: ["быстро бежать", "деревянный дом", "читать книгу", "встретить друга"], correct: [0], prize: 2000000 },
+        { text: "Обособленное приложение?", options: ["Онегин добрый мой приятель", "Взволнованный новостью", "Усталые туристы", "Пушкин великий поэт"], correct: [0,3], prize: 3000000 },
+        { text: "Две запятые?", options: ["Он взял книгу и раскрыв её начал читать", "Солнце выглянуло но тут же спряталось", "Дети играли несмотря на ветер", "Я думаю что он прав"], correct: [0], prize: 4000000 },
+        { text: "Стиль речи: «Согласно статье 23 Конституции...»", options: ["разговорный", "художественный", "официально-деловой", "публицистический"], correct: [2], prize: 5000000 },
+        { text: "Верно расставлены запятые?", options: ["Мы вошли в зал, где собрались гости, и поздоровались.", "Мы вошли в зал где собрались гости, и поздоровались.", "Мы вошли в зал где собрались гости и поздоровались.", "Мы вошли в зал, где собрались гости и поздоровались."], correct: [0], prize: 6000000 },
+        { text: "Тип речи: «Байкал – удивительное озеро. Вода прозрачна...»", options: ["повествование", "описание", "рассуждение", "с описанием"], correct: [1], prize: 7000000 },
+        { text: "Цифры запятых: «Он вышел (1) глубоко вздохнул (2) и (3) посмотрев (4) улыбнулся»", options: ["1,2,4", "1,3,4", "1,4", "2,3,4"], correct: [1], prize: 8000000 },
+        { text: "Прямая речь верно?", options: ["«Пора вставать» – сказала мама.", "«Пора вставать», сказала мама.", "«Пора вставать» сказала мама.", "\"пора вставать\", - сказала мама."], correct: [3], prize: 9000000 },
+        { text: "Плеоназм?", options: ["вернулся обратно", "памятный сувенир", "свободная вакансия", "все выше примеры"], correct: [3], prize: 10000000 },
+        { text: "Ошибка в предложении?", options: ["Подъезжая к городу, начался ветер.", "Читая книгу, я делаю заметки.", "Вернувшись, он позвонил.", "Услышав шум, собака насторожилась."], correct: [0], prize: 15000000 },
+        { text: "Правильный диалог?", options: ["– Привет! – сказал Петя. – Здравствуй, – ответил Коля.", "– Привет! – сказал Петя. Здравствуй, – ответил Коля.", "«Привет!» – сказал Петя. «Здравствуй», – ответил Коля.", "– Привет! – сказал Петя. – Здравствуй! – ответил Коля."], correct: [2], prize: 18000000 },
+        { text: "Нет пунктуационной ошибки?", options: ["Всё что он говорил было правдой.", "Деревья, которые посадили весной, уже зазеленели.", "Он проснулся, когда солнце взошло, и встал.", "Поезд на который мы опоздали ушёл."], correct: [1,2], prize: 19000000 },
+        { text: "Слитно?", options: ["ЧТО(БЫ) ни случилось, НЕ(СМОТРЯ) на усталость, ТАК(ЖЕ)", "Он (НЕ)раз говорил, НИ(КТО) иной, ПО(ЭТОМУ)", "В(ТЕЧЕНИЕ) дня, (НЕ)было (НИ)души, ЗА(ТО)", "(В)ВИДУ непогоды, (ПРИ)ЧЁМ, (ПО)ЭТОМУ"], correct: [3], prize: 20000000 },
+        { text: "НЕ с наречием слитно?", options: ["ничуть (не)весело", "(не)ряшливо одет", "вовсе (не)интересно", "(не)громко, а тихо"], correct: [1], prize: 21000000 },
+        { text: "Тип сказуемого: «Он был готов спорить»", options: ["простое глагольное", "составное глагольное", "составное именное", "сложное"], correct: [2], prize: 22000000 },
+        { text: "Две запятые?", options: ["Все кто видели", "Мы вышли когда рассвело и отправились", "Дождь лил но мы не вернулись", "Он подошёл и увидев фигуру вышел"], correct: [1], prize: 23000000 },
+        { text: "Средство связи: «Мне подарили книгу. Этот подарок стал дорогим»", options: ["антоним", "местоимение", "повтор", "союз"], correct: [1], prize: 24000000 },
+        { text: "Ошибка управления?", options: ["Согласно расписания", "Благодаря помощи", "Вопреки прогнозам", "По приезду"], correct: [0], prize: 25000000 },
+        { text: "НИ пишется?", options: ["н.. разу не был", "н.. раз был", "н.. мог не прийти", "н.. кто иной"], correct: [0], prize: 26000000 },
+        { text: "Обособленное обстоятельство?", options: ["Устав после прогулки", "Несмотря на усталость", "Дом стоявший на холме", "Мальчик лет двенадцати"], correct: [0], prize: 27000000 },
+        { text: "Слитно оба?", options: ["(ЗА)ТЕМ, что(БЫ)", "(ТАК)ЖЕ, (ПО)ЭТОМУ", "(ПО)ЭТОМУ, (ЗА)ТО", "(В)ВИДУ, (НА)ПОДОБИЕ"], correct: [3], prize: 28000000 },
+        { text: "Двоеточие верно?", options: ["Я оглянулся: никого не было (дополняет)", "Он опоздал: проспал (обобщ. слово)", "В лесу тихо: дятел стучал (причина)", "Погода испортилась: пошёл дождь (поясняет)"], correct: [0], prize: 30000000 }
+    ];
+
+    const PRIZES_TABLE = [0,500,1000,2000,3000,5000,8000,12000,16000,32000,64000,125000,125000,250000,250000,500000,500000,1000000,1500000,2000000,3000000,4000000,5000000,6000000,7000000,8000000,9000000,10000000,15000000,18000000,19000000,20000000,21000000,22000000,23000000,24000000,25000000,26000000,27000000,28000000,30000000];
+    const SAFE_LEVELS = [5,10,15,20,25,30,35];
+
+    // Система аккаунтов
+    let accounts = JSON.parse(localStorage.getItem("accounts") || '{"Admin":{"password":"admin123","isAdmin":true,"totalEarned":0}}');
+    // Хранилище завершённых тестов (чтобы выигрыш зачислялся только один раз)
+    let completedTests = JSON.parse(localStorage.getItem("completedTests") || '{}');
+    function saveCompletedTests() { localStorage.setItem("completedTests", JSON.stringify(completedTests)); }
+    
+    function saveAccounts() { localStorage.setItem("accounts", JSON.stringify(accounts)); loadLeaderboard(); }
+    function getAccountsCount() { return Object.keys(accounts).filter(name => name !== "Admin" && !accounts[name].isAdmin).length; }
+    function canCreateAccount() { return getAccountsCount() < 3; }
+    function registerUser(name, password) {
+        if(accounts[name]) return { success: false, error: "❌ Имя уже существует" };
+        if(password.length < 3 || password.length > 10) return { success: false, error: "❌ Пароль должен быть 3-10 символов" };
+        if(name === "Admin") return { success: false, error: "❌ Имя Admin зарезервировано" };
+        if(!canCreateAccount()) return { success: false, error: "❌ Достигнут лимит аккаунтов (максимум 3)" };
+        accounts[name] = { password: password, isAdmin: false, totalEarned: 0 };
+        saveAccounts();
+        return { success: true };
+    }
+    function loginUser(name, password) {
+        if(!accounts[name]) return { success: false, error: "❌ Пользователь не найден" };
+        if(accounts[name].password !== password) return { success: false, error: "❌ Неверный пароль" };
+        return { success: true, isAdmin: accounts[name].isAdmin, totalEarned: accounts[name].totalEarned || 0 };
+    }
+    function deleteAccount(name) { if(name !== "Admin" && accounts[name]) { delete accounts[name]; saveAccounts(); return true; } return false; }
+    function setAdmin(name, isAdmin) { if(accounts[name] && name !== "Admin") { accounts[name].isAdmin = isAdmin; saveAccounts(); } }
+
+    // Хранилище тестов
+    function loadAllTests(){ const s=localStorage.getItem("all_tests"); return s?JSON.parse(s):[]; }
+    function saveAllTests(tests){ localStorage.setItem("all_tests",JSON.stringify(tests)); }
+    function initTests(){
+        let all=loadAllTests();
+        if(all.length===0){ let defaultTest={ id:"default", name:"⭐ Стандартный тест (русский язык)", author:"System", isDefault:true, pinned:true, createdAt:Date.now(), questions:STANDARD_QUESTIONS }; saveAllTests([defaultTest]); }
+    }
+    initTests();
+
+    let currentUser = null;
+    let currentQuestions = [...STANDARD_QUESTIONS];
+    let currentTestId = "default";
+    let currentIndex = 0;
+    let totalEarned = 0;
+    let questionAnswered = false;
+    let selectedAnswers = new Set();
+    let used5050 = false, usedFriend = false, usedAudience = false;
+    let currentQuestionObj = null;
+    let gameActive = true;
+    let testCompleted = false; // флаг, что тест уже завершён (чтобы не зачислять повторно)
+
+    function isAdmin(){ return currentUser && accounts[currentUser.name]?.isAdmin === true; }
+    function deleteTestById(testId){ let tests=loadAllTests(); if(tests.find(t=>t.id===testId) && (isAdmin() || (currentUser && tests.find(t=>t.id===testId)?.author===currentUser.name))){ saveAllTests(tests.filter(t=>t.id!==testId)); return true; } return false; }
+    function pinTest(testId){ let tests=loadAllTests(); let test=tests.find(t=>t.id===testId); if(test && isAdmin()){ test.pinned=!test.pinned; saveAllTests(tests); } }
+
+    function getSafePrize() { let safe=0; for(let l of SAFE_LEVELS) if(currentIndex+1>=l) safe=PRIZES_TABLE[Math.min(l,PRIZES_TABLE.length-1)]||0; return safe; }
+    function updateUI() {
+        document.getElementById("qnum").innerText = currentIndex+1;
+        document.getElementById("qNumber").innerText = currentIndex+1;
+        document.getElementById("currentPrize").innerText = totalEarned.toLocaleString()+" ₽";
+        document.getElementById("prizeDisplay").innerText = totalEarned.toLocaleString()+" ₽";
+        document.getElementById("safePrize").innerText = getSafePrize().toLocaleString()+" ₽";
+        buildLadder();
+        // Обновляем отображение пользователя с текущим выигрышем
+        if(currentUser){ updateUserDisplay(); }
+    }
+    function buildLadder() {
+        const ladder=document.getElementById("ladder");
+        ladder.innerHTML="";
+        for(let i=Math.min(PRIZES_TABLE.length-1,currentQuestions.length);i>=1;i--){
+            const div=document.createElement("div"); div.className="ladder-item";
+            if(currentIndex===i) div.classList.add("active");
+            if(i<currentIndex) div.classList.add("completed");
+            div.innerHTML=`<span>Вопрос ${i}</span><span>${PRIZES_TABLE[i].toLocaleString()} ₽</span>`;
+            ladder.appendChild(div);
+        }
+    }
+    function loadQuestion() {
+        const q=currentQuestions[currentIndex];
+        currentQuestionObj=q;
+        document.getElementById("questionText").innerText=q.text;
+        const container=document.getElementById("answers");
+        container.innerHTML="";
+        const letters=["А","Б","В","Г"];
+        q.options.forEach((opt,idx)=>{
+            const btn=document.createElement("div"); btn.className="ans-btn";
+            btn.innerHTML=`<div class="ans-letter">${letters[idx]}</div><div>${opt}</div>`;
+            btn.onclick=()=>{ if(!questionAnswered){ if(selectedAnswers.has(idx)){ selectedAnswers.delete(idx); btn.classList.remove("selected"); } else { selectedAnswers.add(idx); btn.classList.add("selected"); } } };
+            container.appendChild(btn);
+        });
+        document.getElementById("submitBtn").disabled=false;
+        document.getElementById("nextBtn").disabled=true;
+        document.querySelectorAll(".ans-btn").forEach(b=>b.classList.remove("disabled-ans","correct-highlight","wrong-highlight","selected"));
+        questionAnswered=false;
+        selectedAnswers.clear();
+        updateUI();
+    }
+    function submitAnswer() {
+        if(questionAnswered) return;
+        if(selectedAnswers.size===0){ showModal("Внимание","Выберите ответы"); return; }
+        const correct=Array.isArray(currentQuestionObj.correct)?currentQuestionObj.correct:[currentQuestionObj.correct];
+        const selected=Array.from(selectedAnswers).sort();
+        const isCorrect=selected.length===correct.length && selected.every((v,i)=>v===correct[i]);
+        questionAnswered=true;
+        const btns=document.querySelectorAll(".ans-btn");
+        btns.forEach((b,i)=>{ if(correct.includes(i)) b.classList.add("correct-highlight"); });
+        const russianLetters=["А","Б","В","Г"];
+        if(isCorrect){
+            totalEarned+=currentQuestionObj.prize;
+            showModal("✅ Правильно!",`+${currentQuestionObj.prize.toLocaleString()} ₽! Всего: ${totalEarned.toLocaleString()} ₽`);
+        } else {
+            const safe=getSafePrize();
+            totalEarned=safe;
+            selected.forEach(i=>{ if(btns[i] && !correct.includes(i)) btns[i].classList.add("wrong-highlight"); });
+            const correctLetters=correct.map(i=>russianLetters[i]).join(", ");
+            showModal("❌ Неправильно",`Выигрыш обнулён до несгораемой суммы: ${safe.toLocaleString()} ₽`, `<div>Правильные ответы: ${correctLetters}</div>`);
+        }
+        document.getElementById("submitBtn").disabled=true;
+        document.getElementById("nextBtn").disabled=false;
+        updateUI();
+    }
+    function nextQuestion() {
+        if(!questionAnswered) return;
+        if(currentIndex+1<currentQuestions.length){ currentIndex++; loadQuestion(); }
+        else {
+            // Тест завершён! Зачисляем выигрыш только если это первый раз для этого теста
+            if(currentUser && !testCompleted) {
+                const key = `${currentUser.name}_${currentTestId}`;
+                if(!completedTests[key]) {
+                    completedTests[key] = totalEarned;
+                    saveCompletedTests();
+                    // Обновляем общий выигрыш пользователя в аккаунте
+                    accounts[currentUser.name].totalEarned = totalEarned;
+                    saveAccounts();
+                    showModal("🏆 ПОБЕДА!", `Вы прошли все вопросы и заработали ${totalEarned.toLocaleString()} ₽! Ваш результат сохранён в таблице лидеров.`);
+                } else {
+                    showModal("🏆 ПОБЕДА!", `Вы прошли все вопросы и заработали ${totalEarned.toLocaleString()} ₽! (Этот тест уже был пройден ранее, рекорд не обновлён)`);
+                }
+                testCompleted = true;
+            } else if(!currentUser) {
+                showModal("🏆 ПОБЕДА!", `Вы прошли все вопросы и заработали ${totalEarned.toLocaleString()} ₽! Войдите в аккаунт, чтобы сохранить результат.`);
+            } else {
+                showModal("🏆 ПОБЕДА!", `Вы прошли все вопросы и заработали ${totalEarned.toLocaleString()} ₽!`);
+            }
+            gameActive = false;
+            document.getElementById("nextBtn").disabled = true;
+        }
+    }
+    function restartGame() {
+        gameActive=true;
+        currentIndex=0;
+        totalEarned=currentUser?accounts[currentUser.name]?.totalEarned||0:0;
+        used5050=false; usedFriend=false; usedAudience=false;
+        questionAnswered=false;
+        selectedAnswers.clear();
+        testCompleted = false;
+        document.getElementById("life5050").classList.remove("disabled");
+        document.getElementById("lifefriend").classList.remove("disabled");
+        document.getElementById("lifeaud").classList.remove("disabled");
+        document.querySelectorAll(".ans-btn").forEach(b=>{ b.style.opacity=""; b.style.pointerEvents=""; b.style.textDecoration=""; });
+        loadQuestion();
+    }
+    function showModal(title,text,extra=""){ document.getElementById("modalTitle").innerText=title; document.getElementById("modalText").innerText=text; document.getElementById("modalExtra").innerHTML=extra; document.getElementById("modal").style.display="flex"; }
+    function closeModal(){ document.getElementById("modal").style.display="none"; }
+    document.getElementById("modalClose").onclick=closeModal;
+    document.getElementById("submitBtn").onclick=submitAnswer;
+    document.getElementById("nextBtn").onclick=nextQuestion;
+    document.getElementById("restartBtn").onclick=restartGame;
+
+    // Функции пользователя
+    function updateUserDisplay() { 
+        let displayText = currentUser ? `${escapeHtml(currentUser.name)}${accounts[currentUser.name]?.isAdmin ? ' <span class="admin-badge">ADMIN</span>' : ''} (${totalEarned.toLocaleString()} ₽)` : "Не авторизован";
+        document.getElementById("userNameDisplay").innerHTML = displayText; 
+        loadLeaderboard(); 
+    }
+    function escapeHtml(s){ return String(s).replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':'&gt;';}); }
+    function loadLeaderboard() {
+        let players = Object.entries(accounts).map(([name,data]) => ({ name, totalEarned: data.totalEarned || 0, isAdmin: data.isAdmin || false }));
+        players.sort((a,b)=>b.totalEarned - a.totalEarned);
+        const container = document.getElementById("leaderboardList");
+        if(!players.length){ container.innerHTML="<div style='text-align:center;padding:20px;'>Нет игроков</div>"; return; }
+        let html = `<table class="leaderboard-table"><thead><th>#</th><th>Игрок</th><th>Выигрыш</th></thead><tbody>`;
+        players.forEach((p,idx)=>{ const isCurrent=currentUser && currentUser.name===p.name; html+=`<tr data-name="${escapeHtml(p.name)}" class="${isCurrent?'current-user-row':''}" style="cursor:pointer;"><td>${idx+1}<td>${escapeHtml(p.name)}${p.isAdmin?' <span class="admin-badge">ADMIN</span>':''}<td>${p.totalEarned.toLocaleString()} ₽</td>`; });
+        container.innerHTML = html + "</tbody></table>";
+        document.querySelectorAll("#leaderboardList tr[data-name]").forEach(row=>{ row.onclick=()=>showUserProfile(row.getAttribute("data-name")); });
+    }
+    function showUserProfile(username){
+        if(!accounts[username]) return;
+        let userTests = loadAllTests().filter(t=>!t.isDefault && t.author===username);
+        let isCurrentAdmin = isAdmin();
+        let content = `<div><strong>${escapeHtml(username)}</strong>${accounts[username].isAdmin?' <span class="admin-badge">ADMIN</span>':''}</div><div class="profile-stats">💰 Выигрыш: ${(accounts[username].totalEarned||0).toLocaleString()} ₽</div><div><strong>📋 Тесты пользователя (${userTests.length}):</strong></div>`;
+        if(userTests.length===0) content+=`<div class="small">Нет созданных тестов</div>`;
+        else userTests.forEach(test=>{ content+=`<div class="library-card"><div><strong>${escapeHtml(test.name)}</strong> (${test.questions.length} вопросов)</div><button class="btn secondary" style="margin-top:6px;padding:4px 12px;" onclick="playTestById('${test.id}'); document.getElementById('profileModal').style.display='none';">Играть</button></div>`; });
+        if(isCurrentAdmin && username !== "Admin"){
+            content+=`<div style="margin-top:16px;"><button class="btn ${accounts[username].isAdmin?'secondary':'btn'}" onclick="toggleAdmin('${username}', ${!accounts[username].isAdmin})">${accounts[username].isAdmin?'🔻 Снять права админа':'👑 Назначить админом'}</button></div>`;
+            content+=`<div style="margin-top:12px;"><button class="btn danger" onclick="deleteAccountAndClose('${username}')">🗑 Удалить аккаунт</button></div>`;
+        }
+        document.getElementById("profileTitle").innerHTML = `Профиль: ${escapeHtml(username)}`;
+        document.getElementById("profileContent").innerHTML = content;
+        document.getElementById("profileModal").style.display = "flex";
+    }
+    window.toggleAdmin = function(username, makeAdmin){ if(isAdmin()){ setAdmin(username, makeAdmin); loadLeaderboard(); showUserProfile(username); } };
+    window.deleteAccountAndClose = function(username){ if(confirm(`Удалить аккаунт "${username}"?`)){ deleteAccount(username); document.getElementById("profileModal").style.display="none"; if(currentUser && currentUser.name === username){ currentUser=null; totalEarned=0; restartGame(); updateUserDisplay(); } loadLeaderboard(); } };
+    window.playTestById = function(id){ 
+        let tests=loadAllTests(); 
+        let test=tests.find(t=>t.id===id); 
+        if(test){ 
+            currentQuestions=test.questions.map(q=>({...q, prize:q.prize||1000})); 
+            currentTestId=id;
+            // Проверяем, проходил ли пользователь этот тест раньше
+            if(currentUser) {
+                const key = `${currentUser.name}_${id}`;
+                if(completedTests[key]) {
+                    totalEarned = completedTests[key];
+                } else {
+                    totalEarned = 0;
+                }
+            } else {
+                totalEarned = 0;
+            }
+            restartGame(); 
+            document.querySelectorAll(".test-btn").forEach(b=>b.classList.remove("active")); 
+        } 
+    };
+    document.getElementById("closeProfileBtn").onclick = () => document.getElementById("profileModal").style.display = "none";
+
+    // Логин
+    function saveRememberedUser(name) { if(name) localStorage.setItem("rememberedUser", name); else localStorage.removeItem("rememberedUser"); }
+    function loadRememberedUser() { 
+        const remembered = localStorage.getItem("rememberedUser"); 
+        if(remembered && accounts[remembered]) { 
+            currentUser = { name: remembered }; 
+            totalEarned = accounts[remembered].totalEarned || 0; 
+            restartGame(); 
+            updateUserDisplay(); 
+        } 
+    }
+    document.getElementById("loginBtn").onclick = () => { document.getElementById("loginNameInput").value=""; document.getElementById("loginPasswordInput").value=""; document.getElementById("rememberMeCheckbox").checked=false; document.getElementById("loginMessage").innerHTML=""; document.getElementById("loginModal").style.display="flex"; };
+    document.getElementById("doLoginBtn").onclick = () => {
+        let name = document.getElementById("loginNameInput").value.trim();
+        let pwd = document.getElementById("loginPasswordInput").value;
+        let remember = document.getElementById("rememberMeCheckbox").checked;
+        if(!name){ document.getElementById("loginMessage").innerHTML="<span class='error-msg'>❌ Введите имя</span>"; return; }
+        let res = loginUser(name, pwd);
+        if(res.success){ 
+            currentUser = { name: name }; 
+            totalEarned = accounts[name].totalEarned || 0;
+            if(remember) saveRememberedUser(name); else saveRememberedUser(null); 
+            restartGame(); 
+            updateUserDisplay(); 
+            document.getElementById("loginMessage").innerHTML="<span class='success-msg'>✅ Вход выполнен</span>"; 
+            setTimeout(()=>{ document.getElementById("loginModal").style.display="none"; },1000);
+        } else { 
+            document.getElementById("loginMessage").innerHTML=`<span class='error-msg'>${res.error}</span>`; 
+        }
+    };
+    document.getElementById("doRegisterBtn").onclick = () => {
+        let name = document.getElementById("loginNameInput").value.trim();
+        let pwd = document.getElementById("loginPasswordInput").value;
+        let remember = document.getElementById("rememberMeCheckbox").checked;
+        if(!name){ document.getElementById("loginMessage").innerHTML="<span class='error-msg'>❌ Введите имя</span>"; return; }
+        let res = registerUser(name, pwd);
+        if(res.success){ 
+            let loginRes = loginUser(name, pwd); 
+            if(loginRes.success){ 
+                currentUser = { name: name }; 
+                totalEarned = 0;
+                if(remember) saveRememberedUser(name); else saveRememberedUser(null); 
+                restartGame(); 
+                updateUserDisplay(); 
+                document.getElementById("loginMessage").innerHTML="<span class='success-msg'>✅ Регистрация успешна</span>"; 
+                setTimeout(()=>{ document.getElementById("loginModal").style.display="none"; },1000);
+            }
+        } else { 
+            document.getElementById("loginMessage").innerHTML=`<span class='error-msg'>${res.error}</span>`; 
+        }
+    };
+    document.getElementById("cancelLoginBtn").onclick = () => { document.getElementById("loginModal").style.display="none"; document.getElementById("loginMessage").innerHTML=""; };
+
+    // Конструктор тестов
+    document.getElementById("constructorBtn").onclick = () => { if(!currentUser){ showModal("Доступ запрещён","Сначала войдите в аккаунт"); return; } document.getElementById("constructorModal").style.display="flex"; renderConstructor(); };
+    function renderConstructor(){
+        let newQuestions = [];
+        const container = document.getElementById("questionsBuilder");
+        container.innerHTML = `<div id="newTestQuestions"></div><button class="btn" id="addNewQuestionBtn">+ Добавить вопрос</button><button class="btn" id="saveNewTestBtn" style="margin-top:12px;">💾 Сохранить новый тест</button>`;
+        function renderNewQuestions(){
+            const qDiv = document.getElementById("newTestQuestions");
+            qDiv.innerHTML = "";
+            newQuestions.forEach((q,idx)=>{
+                qDiv.innerHTML += `<div class="constructor-row"><strong>Вопрос ${idx+1}</strong><input class="login-input" placeholder="Текст вопроса" value="${escapeHtml(q.text)}" onchange="window.newQuestions[${idx}].text=this.value"><div>Варианты ответов:</div>`;
+                for(let i=0;i<4;i++){ qDiv.innerHTML += `<div class="option-row"><input type="text" class="login-input" style="flex:1" placeholder="Вариант ${String.fromCharCode(65+i)}" value="${escapeHtml(q.options[i]||'')}" onchange="window.newQuestions[${idx}].options[${i}]=this.value"><input type="checkbox" class="correct-checkbox" ${q.correct.includes(i)?'checked':''} onchange="if(this.checked) window.newQuestions[${idx}].correct.push(${i}); else window.newQuestions[${idx}].correct=window.newQuestions[${idx}].correct.filter(c=>c!==${i})"></div>`; }
+                qDiv.innerHTML += `<button class="btn secondary" style="margin-top:5px;" onclick="window.newQuestions.splice(${idx},1); renderNewQuestions();">Удалить вопрос</button></div>`;
+            });
+        }
+        window.newQuestions = newQuestions;
+        window.renderNewQuestions = renderNewQuestions;
+        document.getElementById("addNewQuestionBtn").onclick = () => { newQuestions.push({ text:"Новый вопрос", options:["","","",""], correct:[] }); renderNewQuestions(); };
+        document.getElementById("saveNewTestBtn").onclick = () => {
+            let name = document.getElementById("testNameInput").value.trim();
+            if(!name){ alert("Введите название"); return; }
+            if(newQuestions.length === 0){ alert("Добавьте вопросы"); return; }
+            let valid = true;
+            newQuestions.forEach((q)=>{ if(!q.text.trim()) valid=false; let hasOpt=false; for(let i=0;i<4;i++) if(q.options[i]?.trim()) hasOpt=true; if(!hasOpt) valid=false; });
+            if(!valid){ alert("Заполните текст вопроса и хотя бы один вариант ответа"); return; }
+            let allTests = loadAllTests();
+            let newId = "test_"+Date.now()+"_"+Math.random().toString(36).substr(2,6);
+            let newTest = { id:newId, name:name, author:currentUser.name, isDefault:false, pinned:false, createdAt:Date.now(), questions:newQuestions.map(q=>({ text:q.text, options:q.options.map(o=>o||""), correct:q.correct, prize:1000 })) };
+            allTests.push(newTest);
+            saveAllTests(allTests);
+            document.getElementById("constructorModal").style.display="none";
+            alert("Тест сохранён!");
+        };
+        renderNewQuestions();
+    }
+    document.getElementById("closeConstructorBtn").onclick = () => document.getElementById("constructorModal").style.display="none";
+
+    // Библиотека тестов
+    document.getElementById("libraryBtn").onclick = () => { openLibrary(); };
+    function openLibrary(){ document.getElementById("libraryModal").style.display="flex"; renderLibrary(""); }
+    function renderLibrary(searchTerm){
+        let tests = loadAllTests().filter(t=>!t.isDefault);
+        if(searchTerm) tests = tests.filter(t=>t.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        let pinned = tests.filter(t=>t.pinned);
+        let unpinned = tests.filter(t=>!t.pinned);
+        let sorted = [...pinned, ...unpinned];
+        const container = document.getElementById("libraryTestsList");
+        if(sorted.length === 0){ container.innerHTML = "<div class='small' style='text-align:center;padding:20px;'>Нет тестов в библиотеке</div>"; return; }
+        let html = "";
+        sorted.forEach(test => {
+            html += `<div class="library-card ${test.pinned?'pinned':''}"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;"><div><strong>${escapeHtml(test.name)}</strong> <span class="small">автор: ${escapeHtml(test.author)}</span> ${test.pinned?'<span class="pinned-badge">📌 Закреплён</span>':''}</div><div style="display:flex;gap:8px;"><button class="btn secondary" style="padding:4px 12px;" onclick="playTestById('${test.id}'); document.getElementById('libraryModal').style.display='none';">Играть</button>`;
+            if(isAdmin()){ html += `<button class="btn secondary" style="padding:4px 12px;" onclick="pinLibraryTest('${test.id}')">${test.pinned?'📌 Открепить':'📍 Закрепить'}</button><button class="btn danger" style="padding:4px 12px;" onclick="deleteLibraryTest('${test.id}')">🗑 Удалить</button>`; }
+            else if(currentUser && test.author === currentUser.name){ html += `<button class="btn danger" style="padding:4px 12px;" onclick="deleteLibraryTest('${test.id}')">🗑 Удалить</button>`; }
+            html += `</div></div><div class="small">Вопросов: ${test.questions.length}</div></div>`;
+        });
+        container.innerHTML = html;
+    }
+    window.pinLibraryTest = function(id){ if(isAdmin()){ pinTest(id); renderLibrary(document.getElementById("searchLibraryInput").value); } };
+    window.deleteLibraryTest = function(id){ if(isAdmin() || (currentUser && loadAllTests().find(t=>t.id===id)?.author===currentUser.name)){ if(confirm("Удалить тест?")){ deleteTestById(id); renderLibrary(document.getElementById("searchLibraryInput").value); } } };
+    document.getElementById("searchLibraryInput").oninput = function(){ renderLibrary(this.value); };
+    document.getElementById("closeLibraryBtn").onclick = () => document.getElementById("libraryModal").style.display="none";
+
+    // Мои тесты
+    document.getElementById("myTestsBtn").onclick = () => {
+        if(!currentUser){ showModal("Доступ запрещён","Сначала войдите в аккаунт"); return; }
+        let tests = loadAllTests().filter(t=>!t.isDefault && t.author === currentUser.name);
+        let html = "";
+        if(tests.length === 0) html = "<div class='small'>Нет созданных тестов</div>";
+        else tests.forEach(test => { html += `<div class="library-card"><div><strong>${escapeHtml(test.name)}</strong> (${test.questions.length} вопросов)</div><div style="display:flex;gap:8px;margin-top:8px;"><button class="btn secondary" onclick="playTestById('${test.id}'); document.getElementById('myTestsModal').style.display='none';">Играть</button><button class="btn danger" onclick="deleteMyTest('${test.id}')">Удалить</button></div></div>`; });
+        document.getElementById("myTestsList").innerHTML = html;
+        document.getElementById("myTestsModal").style.display = "flex";
+    };
+    window.deleteMyTest = function(id){ if(confirm("Удалить тест?")){ deleteTestById(id); document.getElementById("myTestsBtn").click(); } };
+    document.getElementById("closeMyTestsBtn").onclick = () => document.getElementById("myTestsModal").style.display="none";
+
+    // Подсказки
+    document.getElementById("life5050").onclick = () => { if(!questionAnswered && gameActive && !used5050){ used5050=true; document.getElementById("life5050").classList.add("disabled"); let wrong=[]; let correct=Array.isArray(currentQuestionObj.correct)?currentQuestionObj.correct:[currentQuestionObj.correct]; for(let i=0;i<4;i++) if(!correct.includes(i)) wrong.push(i); wrong.sort(()=>Math.random()-0.5); let toRemove=wrong.slice(0,2); document.querySelectorAll(".ans-btn").forEach((b,i)=>{ if(toRemove.includes(i)){ b.style.opacity="0.4"; b.style.pointerEvents="none"; b.style.textDecoration="line-through"; } }); showModal("50:50","Два варианта скрыты"); } };
+    document.getElementById("lifefriend").onclick = () => { if(!questionAnswered && gameActive && !usedFriend){ usedFriend=true; document.getElementById("lifefriend").classList.add("disabled"); let correct=Array.isArray(currentQuestionObj.correct)?currentQuestionObj.correct:[currentQuestionObj.correct]; let letters=correct.map(i=>["А","Б","В","Г"][i]).join(", "); showModal("Звонок другу",`Друг считает правильные ответы: ${letters}`); } };
+    document.getElementById("lifeaud").onclick = () => { if(!questionAnswered && gameActive && !usedAudience){ usedAudience=true; document.getElementById("lifeaud").classList.add("disabled"); let correct=Array.isArray(currentQuestionObj.correct)?currentQuestionObj.correct:[currentQuestionObj.correct]; let letters=correct.map(i=>["А","Б","В","Г"][i]).join(", "); showModal("Помощь зала",`Зрители думают, что правильные варианты: ${letters}`); } };
+
+    // Стандартный тест
+    document.getElementById("defaultTestBtn").onclick = () => { 
+        currentQuestions = [...STANDARD_QUESTIONS]; 
+        currentTestId = "default";
+        if(currentUser) {
+            const key = `${currentUser.name}_default`;
+            if(completedTests[key]) {
+                totalEarned = completedTests[key];
+            } else {
+                totalEarned = 0;
+            }
+        } else {
+            totalEarned = 0;
+        }
+        restartGame(); 
+        document.querySelectorAll(".test-btn").forEach(b=>b.classList.remove("active")); 
+        document.getElementById("defaultTestBtn").classList.add("active"); 
+    };
+
+    loadRememberedUser();
+    loadLeaderboard();
+    restartGame();
+</script>
+</body>
+</html>
